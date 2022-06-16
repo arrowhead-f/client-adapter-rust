@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  vscode:
+    build: .
+    image: rust-env
+    container_name: rust-env-arrowhead
+    hostname: rust-env
+    volumes:
+      - ..:/workspace
+      - $HOME/.ssh/id_rsa:/root/.ssh/id_rsa:ro
+      - $HOME/.gitconfig:/root/.gitconfig
+      - rust-bash-history:/root/.history
+    working_dir: /workspace
+    entrypoint: /bin/bash
+
+volumes:
+  rust-bash-history:

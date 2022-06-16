@@ -1,0 +1,25 @@
+trigger:
+- main
+
+pool:
+  vmImage: ubuntu-latest
+
+container: rust:latest
+
+steps:
+  - script: |
+      rustup component add rustfmt
+      rustup component add clippy
+    displayName: Install Rustfmt and Clippy
+  - script: cargo build --all
+    workingDirectory: ah_system_adapter
+    displayName: Cargo build
+  - script: cargo fmt --all -- --check
+    workingDirectory: ah_system_adapter
+    displayName: Run Rustfmt
+  - script: cargo clippy --all
+    workingDirectory: ah_system_adapter
+    displayName: Run clippy
+  - script: cargo test --all
+    workingDirectory: ah_system_adapter
+    displayName: Cargo test

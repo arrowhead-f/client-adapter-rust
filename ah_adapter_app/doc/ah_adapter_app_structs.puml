@@ -1,0 +1,84 @@
+@startuml ah_adapter_app main structs
+
+allow_mixing
+
+enum consoleapp::Error {
+    CommandError(String)
+    ControllerError(String)
+    PrintError(String)
+}
+
+class ConsoleApp {
+    +run(controller: &Controller)
+    -try_run(controller: &Controller) -> Result<(), Error>
+}
+
+enum controller::Error {
+    ArrowheadAdapterError(String)
+    DataStoreError(String)
+    SettingsError(String)
+}
+
+class Controller {
+    +register_service(name: &str, service_to_register: RegisterServiceInput) -> Result<()>
+    +unregister_service(&self, name: &str) -> Result<()>
+    +request_publickey(&self) -> Result<String>
+    +request_orchestration(name: &str,  input: RequestOrchestrationInput) -> Result<()>
+    +set_settings(&self, settings: Settings) -> Result<()>
+    +get_settings(&self) -> Result<Settings>
+    +get_services(name_regex: &str) -> Result<Vec<(String, ArrowheadService<EntryTag>)>>
+    +get_orchestrations(&self, name_regex: &str) -> Result<Vec<(String, Orchestration)>>
+    -get_system_adapter(&self) -> Result<ArrowheadSystemAdapter>
+}
+
+enum datastore::Error {
+    IOError(String),
+    RegexError(String),
+    SerializationError(String),
+}
+
+class DataStore {
+    +new() -> Result<Self>
+    +set_settings(&self, settings: Settings)
+    +get_settings(&self) -> Result<Settings>
+    +save_service(name: &str, service_to_save: &ArrowheadService<EntryTag>)
+    +save_orchestration(name: &str, orchestartion_to_save: &Orchestration) -> Result<()>
+    +delete_service(&self, service_name: &str) -> Result<()>
+    +get_services(name_regex: &str) -> Result<Vec<(String, ArrowheadService<EntryTag>)>>
+    +get_orchestrations(&self, name_regex: &str) -> Result<Vec<(String, Orchestration)>>
+    -save_json<T: Serialize>(object: &T, path: &PathBuf) -> Result<()>
+    -read_json<T: DeserializeOwned>(path: &PathBuf) -> Result<T>
+    -get_filtered_items<T: DeserializeOwned>(path: &PathBuf, name_regex: &str) -> Result<Vec<(String, T)>>
+}
+
+class Settings {
+    +service_registry_address: Option<String>
+    +authorization_address: Option<String>
+    +orchestrator_address: Option<String>
+    +system_name: Option<String>
+    +system_address: Option<String>
+    +system_port: Option<u32>
+    +system_authentication_info: Option<String>
+    +column_width: Option<usize>
+    +merge(settings: Settings) -> Self
+}
+
+class serdetable::Serializer
+
+component ah_system_adapter
+
+
+ConsoleApp ..> consoleapp::Error
+ConsoleApp ..> Controller
+ConsoleApp ..> serdetable::Serializer
+ConsoleApp ..> Settings
+
+Controller ..> controller::Error
+Controller *-- DataStore
+Controller ..> ah_system_adapter
+Controller ..> Settings
+
+DataStore ..> datastore::Error
+DataStore ..> Settings
+
+@enduml

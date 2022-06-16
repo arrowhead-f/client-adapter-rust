@@ -1,0 +1,157 @@
+@startuml ah_system_adapter data types
+
+class ServiceQueryForm {
+    +service_requirements: ServiceRequirements
+    +ping_providers: Option<bool>
+}
+
+class ServiceQueryList {
+    +service_query_data: Vec<ArrowheadService<EntryTag>>
+    +unfiltered_hits: u32
+}
+
+enum SecurityType {
+    NotSecure
+    Certificate
+    Token
+}
+
+class ArrowheadService<T> {
+    +entry_tag: T
+    +service_definition: ServiceDefinitionEntry
+    +provider_system: ArrowheadSystem<T>
+    +service_uri: String
+    +end_of_validity: Option<String>
+    +secure: Option<SecurityType>
+    +metadata: Option<HashMap<String, String>>
+    +version: Option<u32>
+    +interfaces: Vec<InterfaceEntry>
+}
+
+class EntryTag {
+    +id: u32
+    +created_at: String
+    +updated_at: String
+}
+
+class ArrowheadSystem<T> {
+    +entry_tag: T
+    +system_name: String
+    +address: String
+    +port: u32
+    +authentication_info: Option<String>
+}
+
+class NoEntryTag {}
+
+class ServiceRequirements {
+    +service_definition_requirement: String
+    +interface_requirements: Option<Vec<String>>
+    +security_requirements: Option<Vec<SecurityType>>
+    +metadata_requirements: Option<HashMap<String, String>>
+    +version_requirement: Option<u32>
+    +max_version_requirement: Option<u32>
+    +min_version_requirement: Option<u32>
+}
+
+class ServiceRequestForm {
+    +requester_system: ArrowheadSystem<NoEntryTag>
+    +requested_service: ServiceRequirements
+    +preferred_providers: Option<Vec<ArrowheadProvider>>
+    +orchestration_flags: Option<HashMap<OrchestrationFlagKey, bool>>
+}
+
+class ArrowheadProvider {
+    +provider_cloud: ArrowheadCloud
+    +provider_system: ArrowheadSystem<NoEntryTag>
+}
+
+class ArrowheadCloud {
+    +operator: String
+    +name: String
+}
+
+enum OrchestrationFlagKey {
+    Machmaking
+    MetadataSearch
+    OnlyPreferred
+    PingProviders
+    OverrideStore
+    EnableInterCloud
+    TriggerInterCloud
+}
+
+class OrchestrationResponse {
+    +response: Vec<Orchestration>
+}
+
+class Orchestration {
+    +provider: ArrowheadSystem<EntryTag>
+    +service: ServiceDefinitionEntry
+    +service_uri: String
+    +secure: SecurityType
+    +metadata: HashMap<String, String>
+    +interfaces: Vec<InterfaceEntry>
+    +version: u32
+    +authorization_tokens: Option<HashMap<String, String>>
+    +warnings: Vec<OrchestrationWarning>
+}
+
+enum OrchestrationWarning {
+    FromOtherCloud
+    TtlExpired
+    TtlExpiring
+    TtlUnknown
+}
+
+class ArrowheadServerException {
+    +error_message: String
+    +error_code: u32
+    +exception_type: String
+    +origin: String
+}
+
+class RegisterServiceInput {
+    +service_definition: ServiceDefinitionEntry
+    +service_uri: String
+    +end_of_validity: Option<String>
+    +secure: Option<SecurityType>
+    +metadata: Option<HashMap<String, String>>
+    +version: Option<u32>
+    +interfaces: Vec<InterfaceEntry>
+}
+
+class RequestOrchestrationInput {
+    +requested_service: ServiceRequirements
+    +preferred_providers: Option<Vec<ArrowheadProvider>>
+    +orchestration_flags: Option<HashMap<OrchestrationFlagKey, bool>>
+}
+
+ServiceQueryForm --> ServiceRequirements
+ServiceRequirements --> SecurityType
+
+ServiceQueryList --> ArrowheadService
+ArrowheadService --> ArrowheadSystem
+ArrowheadService --> SecurityType
+
+ServiceRequestForm --> ArrowheadSystem
+ServiceRequestForm --> ServiceRequirements
+ServiceRequestForm --> ArrowheadProvider
+ServiceRequestForm --> OrchestrationFlagKey
+ArrowheadProvider --> ArrowheadCloud
+ArrowheadProvider --> ArrowheadSystem
+
+OrchestrationResponse --> Orchestration
+Orchestration --> ArrowheadSystem
+Orchestration --> SecurityType
+Orchestration --> OrchestrationWarning
+
+ServiceQueryList --> EntryTag
+Orchestration --> EntryTag
+ServiceRequestForm --> NoEntryTag
+ArrowheadProvider --> NoEntryTag
+
+RegisterServiceInput ..> ArrowheadService
+RequestOrchestrationInput ..> ServiceRequestForm
+
+@enduml
